@@ -2,7 +2,7 @@
 
 for REL in $(ls data/fact-retrieval/original/)
 do
-python -m autoprompt.new_create_trigger \
+CUDA_VISIBLE_DEVICES=$2 python -m autoprompt.create_trigger \
     --train data/filtered_original/$REL/train.jsonl \
     --dev data/filtered_original/$REL/dev.jsonl \
     --template '[CLS] {sub_label} [T] [T] [T] [T] [T] [P]. [SEP]' \
