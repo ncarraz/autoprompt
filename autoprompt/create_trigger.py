@@ -468,7 +468,13 @@ def run_model(args):
             'relation': args.train.parent.stem,
             'template': template
         }
-        print(json.dumps(out))
+        out_json = json.dumps(out)
+        print(out_json)
+        name_suffix = args.model_name.split("/")[1] if "/" in args.model_name else args.model_name
+        result_file_name = "OUTPUT_{}_seed_{}.txt".format(name_suffix, args.seed)
+        result_file = open(result_file_name,"a")
+        result_file.write("{}\n".format(out_json))
+        result_file.close()
 
 
 if __name__ == '__main__':

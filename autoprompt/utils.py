@@ -85,6 +85,9 @@ def encode_label(tokenizer, label, tokenize=False):
     """
     Helper function for encoding labels. Deals with the subtleties of handling multiple tokens.
     """
+    label = " " + label
+    if label == " [Y]":
+        label = "[Y]"
     if isinstance(label, str):
         if tokenize:
             # Ensure label is properly tokenized, and only retain first token

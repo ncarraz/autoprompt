@@ -63,4 +63,6 @@ target/
 .DS_Store
 .vscode/
 out/
-#data/
+data
+OUTPUT*
+data/
