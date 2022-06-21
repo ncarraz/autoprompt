@@ -127,8 +127,11 @@ def set_seed(seed: int):
 
 def get_embeddings(model, config):
     """Returns the wordpiece embedding module."""
-    base_model = getattr(model, config.model_type)
-    embeddings = base_model.embeddings.word_embeddings
+    if config.model_type == "bart":
+        embeddings = model.model.encoder.embed_tokens
+    else:
+        base_model = getattr(model, config.model_type)
+        embeddings = base_model.embeddings.word_embeddings
     return embeddings
 
 
@@ -181,7 +184,7 @@ def isupper(idx, tokenizer):
     # We only want to check tokens that begin words. Since byte-pair encoding
     # captures a prefix space, we need to check that the decoded token begins
     # with a space, and has a capitalized second character.
-    if isinstance(tokenizer, transformers.RobertaTokenizerFast):
+    if isinstance(tokenizer, transformers.RobertaTokenizerFast) or isinstance(tokenizer, transformers.BartTokenizerFast):
         decoded = tokenizer.decode([idx])
         if decoded[0] == ' ' and decoded[1].isupper():
             _isupper = True
