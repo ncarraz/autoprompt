@@ -86,8 +86,8 @@ def encode_label(tokenizer, label, tokenize=False):
     Helper function for encoding labels. Deals with the subtleties of handling multiple tokens.
     """
     label = " " + label
-    if label == " [Y]":
-        label = "[Y]"
+    if label == "  [Y]":
+        label = " [Y]"
     if isinstance(label, str):
         if tokenize:
             # Ensure label is properly tokenized, and only retain first token
@@ -197,7 +197,7 @@ class TriggerTemplatizer:
 
 def add_task_specific_tokens(tokenizer):
     tokenizer.add_special_tokens({
-        'additional_special_tokens': [' [T]', ' [P]', '[Y]']
+        'additional_special_tokens': [' [T]', ' [P]', ' [Y]']
     })
     tokenizer.trigger_token = ' [T]'
     tokenizer.trigger_token_id = tokenizer.convert_tokens_to_ids(' [T]')
@@ -206,8 +206,8 @@ def add_task_specific_tokens(tokenizer):
     # NOTE: BERT and RoBERTa tokenizers work properly if [X] is not a special token...
     # tokenizer.lama_x = '[X]'
     # tokenizer.lama_x_id = tokenizer.convert_tokens_to_ids('[X]')
-    tokenizer.lama_y = '[Y]'
-    tokenizer.lama_x_id = tokenizer.convert_tokens_to_ids('[Y]')
+    tokenizer.lama_y = ' [Y]'
+    tokenizer.lama_x_id = tokenizer.convert_tokens_to_ids(' [Y]')
 
 
 
