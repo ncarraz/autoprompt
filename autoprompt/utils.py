@@ -197,12 +197,12 @@ class TriggerTemplatizer:
 
 def add_task_specific_tokens(tokenizer):
     tokenizer.add_special_tokens({
-        'additional_special_tokens': ['[T]', '[P]', '[Y]']
+        'additional_special_tokens': [' [T]', ' [P]', '[Y]']
     })
-    tokenizer.trigger_token = '[T]'
-    tokenizer.trigger_token_id = tokenizer.convert_tokens_to_ids('[T]')
-    tokenizer.predict_token = '[P]'
-    tokenizer.predict_token_id = tokenizer.convert_tokens_to_ids('[P]')
+    tokenizer.trigger_token = ' [T]'
+    tokenizer.trigger_token_id = tokenizer.convert_tokens_to_ids(' [T]')
+    tokenizer.predict_token = ' [P]'
+    tokenizer.predict_token_id = tokenizer.convert_tokens_to_ids(' [P]')
     # NOTE: BERT and RoBERTa tokenizers work properly if [X] is not a special token...
     # tokenizer.lama_x = '[X]'
     # tokenizer.lama_x_id = tokenizer.convert_tokens_to_ids('[X]')

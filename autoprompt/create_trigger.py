@@ -111,7 +111,7 @@ def load_pretrained(model_name):
     config = AutoConfig.from_pretrained(model_name)
     model = AutoModelWithLMHead.from_pretrained(model_name)
     model.eval()
-    tokenizer = AutoTokenizer.from_pretrained(model_name, add_prefix_space=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     utils.add_task_specific_tokens(tokenizer)
     return config, model, tokenizer
 
@@ -180,7 +180,7 @@ def isupper(idx, tokenizer):
     # We only want to check tokens that begin words. Since byte-pair encoding
     # captures a prefix space, we need to check that the decoded token begins
     # with a space, and has a capitalized second character.
-    if isinstance(tokenizer, transformers.GPT2Tokenizer):
+    if isinstance(tokenizer, transformers.RobertaTokenizerFast):
         decoded = tokenizer.decode([idx])
         if decoded[0] == ' ' and decoded[1].isupper():
             _isupper = True
