@@ -4,6 +4,7 @@ import json
 import logging
 from multiprocessing.sharedctypes import Value
 import random
+import numpy as np
 from collections import defaultdict
 
 import torch
@@ -172,10 +173,15 @@ class TriggerTemplatizer:
         input_ids = model_inputs['input_ids']
         trigger_mask = input_ids.eq(self._tokenizer.trigger_token_id)
         predict_mask = input_ids.eq(self._tokenizer.predict_token_id)
+        last_trigger_mask = torch.zeros_like(predict_mask)
+        last_trigger_id = (np.argwhere(predict_mask)[1]-1).item()
+        last_trigger_mask[0][last_trigger_id] = True
+
         input_ids[predict_mask] = self._tokenizer.mask_token_id
 
         model_inputs['trigger_mask'] = trigger_mask
         model_inputs['predict_mask'] = predict_mask
+        model_inputs['last_trigger_mask'] = last_trigger_mask
 
         # For relation extraction with BERT, update token_type_ids to reflect the two different sequences
         if self._use_ctx and self._config.model_type == 'bert':

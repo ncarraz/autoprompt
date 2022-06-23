@@ -48,6 +48,9 @@ class PredictWrapper:
         model_inputs = model_inputs.copy()
         trigger_mask = model_inputs.pop('trigger_mask')
         predict_mask = model_inputs.pop('predict_mask')
+        last_trigger_mask = model_inputs.pop('last_trigger_mask')
+        if self._model.name_or_path == "gpt2":
+            predict_mask = last_trigger_mask
         model_inputs = replace_trigger_tokens(model_inputs, trigger_ids, trigger_mask)
         output = self._model(**model_inputs)
         logits = output.logits
@@ -114,6 +117,10 @@ def load_pretrained(model_name):
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     utils.add_task_specific_tokens(tokenizer)
+    if not tokenizer.mask_token_id:
+        tokenizer.mask_token_id = tokenizer.eos_token
+    if not tokenizer.pad_token_id:
+        tokenizer.pad_token_id = tokenizer.eos_token
     return config, model, tokenizer
 
 
@@ -129,6 +136,8 @@ def get_embeddings(model, config):
     """Returns the wordpiece embedding module."""
     if config.model_type == "bart":
         embeddings = model.model.encoder.embed_tokens
+    elif config.model_type == "gpt2":
+        embeddings = model.transformer.wte
     else:
         base_model = getattr(model, config.model_type)
         embeddings = base_model.embeddings.word_embeddings
@@ -184,7 +193,8 @@ def isupper(idx, tokenizer):
     # We only want to check tokens that begin words. Since byte-pair encoding
     # captures a prefix space, we need to check that the decoded token begins
     # with a space, and has a capitalized second character.
-    if isinstance(tokenizer, transformers.RobertaTokenizerFast) or isinstance(tokenizer, transformers.BartTokenizerFast):
+    BPE_TOKENIZERS = ["facebook/bart-base", "facebook/bart-large","roberta-large", "roberta-base", "gpt2"]
+    if tokenizer.name_or_path in BPE_TOKENIZERS:
         decoded = tokenizer.decode([idx])
         if decoded[0] == ' ' and decoded[1].isupper():
             _isupper = True
