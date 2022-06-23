@@ -49,15 +49,14 @@ class PredictWrapper:
         trigger_mask = model_inputs.pop('trigger_mask')
         predict_mask = model_inputs.pop('predict_mask')
         last_trigger_mask = model_inputs.pop('last_trigger_mask')
-        if self._model.name_or_path == "gpt2":
+        CAUSAL_LMS = ["gpt2", "transfo-xl-wt103"]
+        if self._model.name_or_path in  CAUSAL_LMS:
             predict_mask = last_trigger_mask
         model_inputs = replace_trigger_tokens(model_inputs, trigger_ids, trigger_mask)
         output = self._model(**model_inputs)
-        
+        logits = output.logits
         if self._model.name_or_path == "transfo-xl-wt103":
             logits = output.prediction_scores
-        else:
-            logits = output.logits
         predict_logits = logits.masked_select(predict_mask.unsqueeze(-1)).view(logits.size(0), -1)
         return predict_logits
 
