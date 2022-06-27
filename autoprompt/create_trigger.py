@@ -49,9 +49,9 @@ class PredictWrapper:
         trigger_mask = model_inputs.pop('trigger_mask')
         predict_mask = model_inputs.pop('predict_mask')
         last_trigger_mask = model_inputs.pop('last_trigger_mask')
-        CAUSAL_LMS = ['gpt2', 't5-small', 't5-base', 't5-large']
+        CAUSAL_LMS = ['gpt2']
         if self._model.name_or_path in  CAUSAL_LMS:
-            predict_mask = last_trigger_mask # predict the last token for causal LMs and some seq2seq LMs
+            predict_mask = last_trigger_mask # predict the last token for causal LMs 
         model_inputs = replace_trigger_tokens(model_inputs, trigger_ids, trigger_mask)
         model_inputs['labels'] =  model_inputs['input_ids'] if 't5' in self._model.name_or_path else None
         output = self._model(**model_inputs)
@@ -123,6 +123,8 @@ def load_pretrained(model_name):
         tokenizer.mask_token_id = tokenizer.eos_token
     if not tokenizer.pad_token_id:
         tokenizer.pad_token_id = tokenizer.eos_token
+    if config.model_type == 't5':
+        tokenizer.mask_token = '<extra_id_0>' # sentinel token
     return config, model, tokenizer
 
 
@@ -275,7 +277,7 @@ def run_model(args):
 
     # To "filter" unwanted trigger tokens, we subtract a huge number from their logits.
     tokenizer_vocab_size = tokenizer.vocab_size
-    if config.model_type == "t5":
+    if config.model_type == "t5": # implemetation details for t5
         tokenizer_vocab_size = 32128
     filter = torch.zeros(tokenizer_vocab_size, dtype=torch.float32, device=device)
     

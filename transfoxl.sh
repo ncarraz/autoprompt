@@ -1,7 +1,7 @@
 python -m autoprompt.create_trigger \
     --train data/fact-retrieval/original_rob/P1001/train.jsonl \
     --dev data/fact-retrieval/original_rob/P1001/dev.jsonl \
-    --template '{sub_label} [T] [T] [T] [T] [T] [P].' \
+    --template '{sub_label} [T] [T] [T] [T] [T] [P]. </s>' \
     --num-cand 10 \
     --accumulation-steps 1 \
     --model-name t5-base \
