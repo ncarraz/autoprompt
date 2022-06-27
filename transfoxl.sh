@@ -4,7 +4,7 @@ python -m autoprompt.create_trigger \
     --template '{sub_label} [T] [T] [T] [T] [T] [P].' \
     --num-cand 10 \
     --accumulation-steps 1 \
-    --model-name gpt2 \
+    --model-name t5-base \
     --bsz 16 \
     --eval-size 16 \
     --iters 10 \

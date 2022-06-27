@@ -51,7 +51,7 @@ class PredictWrapper:
         last_trigger_mask = model_inputs.pop('last_trigger_mask')
         CAUSAL_LMS = ['gpt2', 't5-small', 't5-base', 't5-large']
         if self._model.name_or_path in  CAUSAL_LMS:
-            predict_mask = last_trigger_mask
+            predict_mask = last_trigger_mask # predict the last token for causal LMs and some seq2seq LMs
         model_inputs = replace_trigger_tokens(model_inputs, trigger_ids, trigger_mask)
         model_inputs['labels'] =  model_inputs['input_ids'] if 't5' in self._model.name_or_path else None
         output = self._model(**model_inputs)
@@ -274,7 +274,11 @@ def run_model(args):
     dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False, collate_fn=collator)
 
     # To "filter" unwanted trigger tokens, we subtract a huge number from their logits.
-    filter = torch.zeros(tokenizer.vocab_size, dtype=torch.float32, device=device)
+    tokenizer_vocab_size = tokenizer.vocab_size
+    if config.model_type == "t5":
+        tokenizer_vocab_size = 32128
+    filter = torch.zeros(tokenizer_vocab_size, dtype=torch.float32, device=device)
+    
     if args.filter:
         logger.info('Filtering label tokens.')
         if label_map:
