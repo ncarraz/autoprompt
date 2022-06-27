@@ -203,7 +203,7 @@ class TriggerTemplatizer:
 
 def add_task_specific_tokens(tokenizer):
     tokenizer.add_special_tokens({
-        'additional_special_tokens': [' [T]', ' [P]', ' [Y]']
+        'additional_special_tokens': [' [T]', ' [P]', ' [Y]'] + tokenizer.additional_special_tokens
     })
     tokenizer.trigger_token = ' [T]'
     tokenizer.trigger_token_id = tokenizer.convert_tokens_to_ids(' [T]')
