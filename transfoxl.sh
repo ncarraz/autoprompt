@@ -1,0 +1,14 @@
+python -m autoprompt.create_trigger \
+    --train data/fact-retrieval/original_rob/P1001/train.jsonl \
+    --dev data/fact-retrieval/original_rob/P1001/dev.jsonl \
+    --template '{sub_label} [T] [T] [T] [T] [T] [P].' \
+    --num-cand 10 \
+    --accumulation-steps 1 \
+    --model-name gpt2 \
+    --bsz 16 \
+    --eval-size 16 \
+    --iters 10 \
+    --label-field 'obj_label' \
+    --tokenize-labels \
+    --filter \
+    --print-lama
