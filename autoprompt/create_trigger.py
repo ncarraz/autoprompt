@@ -216,7 +216,6 @@ def run_model(args):
 
     logger.info('Loading model, tokenizer, etc.')
     config, model, tokenizer = load_pretrained(args.model_name)
-    print(tokenizer)
     model.to(device)
     embeddings = get_embeddings(model, config)
     embedding_gradient = GradientStorage(embeddings)
