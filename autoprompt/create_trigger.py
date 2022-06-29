@@ -53,7 +53,8 @@ class PredictWrapper:
         if self._model.name_or_path in  CAUSAL_LMS:
             predict_mask = last_trigger_mask # predict the last token for causal LMs 
         model_inputs = replace_trigger_tokens(model_inputs, trigger_ids, trigger_mask)
-        model_inputs['labels'] =  model_inputs['input_ids'] if 't5' in self._model.name_or_path else None
+        if 't5' in self._model.name_or_path:
+            model_inputs['labels'] =  model_inputs['input_ids'] 
         output = self._model(**model_inputs)
         logits = output.logits
         predict_logits = logits.masked_select(predict_mask.unsqueeze(-1)).view(logits.size(0), -1)
