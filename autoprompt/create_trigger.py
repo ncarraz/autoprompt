@@ -488,7 +488,7 @@ def run_model(args):
             template = tokenizer.decode(lama_template.squeeze(0)[1:-1]).replace('[SEP] ', '').replace('</s> ', '').replace('[ X ]', '[X]')
         else:
             template = tokenizer.decode(lama_template.squeeze(0)[1:-1]).replace('[ X ]', '[X]')
-            template = tokenizer.decode(lama_template.squeeze(0)[1:-1]).replace('X]', '[X]')
+            template = template.replace('X]', '[X]')
         out = {
             'relation': args.train.parent.stem,
             'template': template,
