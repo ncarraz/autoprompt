@@ -5,7 +5,7 @@ do
 python -m autoprompt.create_trigger \
     --train data/filtered_original/$REL/train.jsonl \
     --dev data/filtered_original/$REL/dev.jsonl \
-    --template $2 \
+    --template "$2" \
     --num-cand 10 \
     --accumulation-steps 1 \
     --model-name $1 \
