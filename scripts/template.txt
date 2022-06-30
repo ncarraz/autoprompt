@@ -1,0 +1,4 @@
+BERT : '[CLS] {sub_label} [T] [T] [T] [T] [T] [P]. [SEP]'
+GPT2 : '{sub_label} [T] [T] [T] [T] [T] [P].' 
+ROBERTA: '<s> {sub_label} [T] [T] [T] [T] [T] [P].</s>'
+T5 : '{sub_label} [T] [T] [T] [T] [T] [P]. </s>'

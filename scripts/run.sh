@@ -2,10 +2,10 @@
 
 for REL in $(ls data/filtered_original/)
 do
-CUDA_VISIBLE_DEVICES=$2 python -m autoprompt.create_trigger \
+python -m autoprompt.create_trigger \
     --train data/filtered_original/$REL/train.jsonl \
     --dev data/filtered_original/$REL/dev.jsonl \
-    --template '<s> {sub_label} [T] [T] [T] [T] [T] [P].</s>' \
+    --template $2 \
     --num-cand 10 \
     --accumulation-steps 1 \
     --model-name $1 \
@@ -17,4 +17,3 @@ CUDA_VISIBLE_DEVICES=$2 python -m autoprompt.create_trigger \
     --filter \
     --print-lama 
 done
-
