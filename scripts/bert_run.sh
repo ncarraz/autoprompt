@@ -9,9 +9,9 @@ python -m autoprompt.create_trigger \
     --num-cand 10 \
     --accumulation-steps 1 \
     --model-name $1 \
-    --bsz 100 \
+    --bsz 20 \
     --eval-size 100 \
-    --iters 100 \
+    --iters 1000 \
     --label-field 'obj_label' \
     --tokenize-labels \
     --filter \

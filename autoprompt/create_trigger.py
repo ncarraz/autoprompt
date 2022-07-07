@@ -26,7 +26,7 @@ class GradientStorage:
     """
     def __init__(self, module):
         self._stored_gradient = None
-        module.register_backward_hook(self.hook)
+        module.register_full_backward_hook(self.hook)
 
     def hook(self, module, grad_in, grad_out):
         self._stored_gradient = grad_out[0]
@@ -49,8 +49,7 @@ class PredictWrapper:
         trigger_mask = model_inputs.pop('trigger_mask')
         predict_mask = model_inputs.pop('predict_mask')
         last_trigger_mask = model_inputs.pop('last_trigger_mask')
-        CAUSAL_LMS = ['gpt2']
-        if self._model.name_or_path in  CAUSAL_LMS:
+        if "gpt2" in self._model.name_or_path:
             predict_mask = last_trigger_mask # predict the last token for causal LMs 
         model_inputs = replace_trigger_tokens(model_inputs, trigger_ids, trigger_mask)
         if 't5' in self._model.name_or_path:
@@ -108,7 +107,6 @@ class AccuracyFn:
         _, predictions = all_label_logp.max(dim=-1)
         predictions = [self._pred_to_label[x] for x in predictions.tolist()]
         return predictions
-
 
 def load_pretrained(model_name):
     """
@@ -200,7 +198,7 @@ def isupper(idx, tokenizer):
     # We only want to check tokens that begin words. Since byte-pair encoding
     # captures a prefix space, we need to check that the decoded token begins
     # with a space, and has a capitalized second character.
-    BPE_TOKENIZERS = ["facebook/bart-base", "facebook/bart-large","roberta-large", "roberta-base", "gpt2"]
+    BPE_TOKENIZERS = ["facebook/bart-base", "facebook/bart-large","roberta-large", "roberta-base", "gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"]
     if tokenizer.name_or_path in BPE_TOKENIZERS:
         decoded = tokenizer.decode([idx])
         if decoded[0] == ' ' and decoded[1].isupper():
