@@ -5,7 +5,7 @@ do
 bash scripts/bert_run.sh $LM 
 done
 
-for LM in "roberta-base" "roberta-large" "allenai/longformer-base-4096" "allenai/longformer-large-4096" "distilroberta-base" "facebook/bart-base" "facebook/bart-large"  
+for LM in "roberta-base" "roberta-large" "distilroberta-base" "facebook/bart-base" "facebook/bart-large"  
 do
 bash scripts/roberta_run.sh $LM 
 done
@@ -15,4 +15,7 @@ do
 bash scripts/t5_run.sh $LM 
 done
 
-bash scripts/gpt2_run.sh gpt2  
+for LM in "gpt2" "gpt2-medium" "gpt2-large" "gpt2-xl"  
+do
+bash scripts/gpt2_run.sh $LM  
+done
