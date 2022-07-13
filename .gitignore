@@ -67,4 +67,5 @@ data
 OUTPUT*
 data/
 results/
+old_results/
 nohup.out

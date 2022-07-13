@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 import transformers
 from transformers import AutoConfig, AutoModelWithLMHead, AutoTokenizer
 from tqdm import tqdm
+import os
 
 import autoprompt.utils as utils
 
@@ -496,6 +497,7 @@ def run_model(args):
         out_json = json.dumps(out)
         print(out_json)
         name_suffix = args.model_name.split("/")[1] if "/" in args.model_name else args.model_name
+        os.makedirs("results", exist_ok=True)
         result_file_name = "results/{}_autoprompt_seed_{}.jsonl".format(name_suffix, args.seed)
         result_file = open(result_file_name,"a")
         result_file.write("{}\n".format(out_json))

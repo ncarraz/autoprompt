@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for REL in P279 # $(ls data/filtered_original/)
+for REL in $(ls data/filtered_original/)
 do
 python -m autoprompt.create_trigger \
     --train data/filtered_original/$REL/train.jsonl \
