@@ -13,6 +13,7 @@ import transformers
 from transformers import AutoConfig, AutoModelWithLMHead, AutoTokenizer
 from tqdm import tqdm
 import os
+from itertools import cycle
 
 import autoprompt.utils as utils
 
@@ -223,9 +224,13 @@ def run_model(args):
     embedding_gradient = GradientStorage(embeddings)
     predictor = PredictWrapper(model)
 
-    config, eval_model, tokenizer = load_pretrained(args.eval_model_name)
-    eval_model.to(device)
-    eval_predictor = PredictWrapper(eval_model)
+    eval_predictors = []
+    for eval_model_name in ["roberta-base","roberta-large","distilroberta-base","facebook/bart-base","facebook/bart-large"]:
+        config, eval_model, tokenizer = load_pretrained(eval_model_name)
+        eval_model.to(device)
+        eval_predictor = PredictWrapper(eval_model)
+        eval_predictors.append(eval_predictor)
+    eval_predictors = cycle(eval_predictors)
 
     if args.label_map is not None:
         label_map = json.loads(args.label_map)
@@ -314,7 +319,7 @@ def run_model(args):
         model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
         labels = labels.to(device)
         with torch.no_grad():
-            predict_logits = eval_predictor(model_inputs, trigger_ids)
+            predict_logits = predictor(model_inputs, trigger_ids)
         numerator += evaluation_fn(predict_logits, labels).sum().item()
         denominator += labels.size(0)
     dev_metric = numerator / (denominator + 1e-13)
@@ -335,6 +340,7 @@ def run_model(args):
         train_iter = iter(train_loader)
         averaged_grad = None
 
+        eval_predictor = next(eval_predictors)
         # Accumulate
         for step in pbar:
 
