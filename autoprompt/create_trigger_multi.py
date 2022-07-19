@@ -163,6 +163,7 @@ def hotflip_attack(averaged_grad,
             averaged_grad
         )
         if filter is not None:
+            print(gradient_dot_embedding_matrix.shape, filter.shape)
             gradient_dot_embedding_matrix -= filter
         if not increase_loss:
             gradient_dot_embedding_matrix *= -1
