@@ -215,13 +215,17 @@ def run_model(args):
 
     set_seed(args.seed)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    num_trigger_tokens = 5
     logger.info('Loading model, tokenizer, etc.')
     config, model, tokenizer = load_pretrained(args.model_name)
     model.to(device)
     embeddings = get_embeddings(model, config)
     embedding_gradient = GradientStorage(embeddings)
     predictor = PredictWrapper(model)
+
+    eval_config, eval_model, eval_tokenizer = load_pretrained(args.eval_model_name)
+    eval_model.to(device)
+    eval_predictor = PredictWrapper(eval_model)
 
     if args.label_map is not None:
         label_map = json.loads(args.label_map)
@@ -246,9 +250,9 @@ def run_model(args):
         trigger_ids = tokenizer.convert_tokens_to_ids(args.initial_trigger)
         logger.debug(f'Initial trigger: {args.initial_trigger}')
         logger.debug(f'Trigger ids: {trigger_ids}')
-        assert len(trigger_ids) == templatizer.num_trigger_tokens
+        assert len(trigger_ids) == num_trigger_tokens
     else:
-        trigger_ids = [tokenizer.mask_token_id] * templatizer.num_trigger_tokens
+        trigger_ids = [tokenizer.mask_token_id] * num_trigger_tokens
     trigger_ids = torch.tensor(trigger_ids, device=device).unsqueeze(0)
     best_trigger_ids = trigger_ids.clone()
 
@@ -266,13 +270,13 @@ def run_model(args):
     if args.perturbed:
         train_dataset = utils.load_augmented_trigger_dataset(args.train, templatizer, limit=args.limit)
     else:
-        train_dataset = utils.load_trigger_dataset(args.train, templatizer, use_ctx=args.use_ctx, limit=args.limit)
+        train_dataset = utils.load_trigger_dataset(args.train, use_ctx=args.use_ctx, limit=args.limit)
     train_loader = DataLoader(train_dataset, batch_size=args.bsz, shuffle=True, collate_fn=collator)
 
     if args.perturbed:
         dev_dataset = utils.load_augmented_trigger_dataset(args.dev, templatizer)
     else:
-        dev_dataset = utils.load_trigger_dataset(args.dev, templatizer, use_ctx=args.use_ctx)
+        dev_dataset = utils.load_trigger_dataset(args.dev, use_ctx=args.use_ctx)
     dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False, collate_fn=collator)
 
     # To "filter" unwanted trigger tokens, we subtract a huge number from their logits.
@@ -307,6 +311,7 @@ def run_model(args):
     numerator = 0
     denominator = 0
     for model_inputs, labels in tqdm(dev_loader):
+        model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
         model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
         labels = labels.to(device)
         with torch.no_grad():
@@ -337,6 +342,7 @@ def run_model(args):
             # Shuttle inputs to GPU
             try:
                 model_inputs, labels = next(train_iter)
+                model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
             except:
                 logger.warning(
                     'Insufficient data for number of accumulation steps. '
@@ -353,7 +359,7 @@ def run_model(args):
             bsz, _, emb_dim = grad.size()
             selection_mask = model_inputs['trigger_mask'].unsqueeze(-1)
             grad = torch.masked_select(grad, selection_mask)
-            grad = grad.view(bsz, templatizer.num_trigger_tokens, emb_dim)
+            grad = grad.view(bsz, num_trigger_tokens, emb_dim)
 
             if averaged_grad is None:
                 averaged_grad = grad.sum(dim=0) / args.accumulation_steps
@@ -364,7 +370,7 @@ def run_model(args):
         pbar = tqdm(range(args.accumulation_steps))
         train_iter = iter(train_loader)
 
-        token_to_flip = random.randrange(templatizer.num_trigger_tokens)
+        token_to_flip = random.randrange(num_trigger_tokens)
         candidates = hotflip_attack(averaged_grad[token_to_flip],
                                     embeddings.weight,
                                     increase_loss=False,
@@ -378,6 +384,7 @@ def run_model(args):
 
             try:
                 model_inputs, labels = next(train_iter)
+                model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
             except:
                 logger.warning(
                     'Insufficient data for number of accumulation steps. '
@@ -431,6 +438,7 @@ def run_model(args):
         numerator = 0
         denominator = 0
         for model_inputs, labels in tqdm(dev_loader):
+            model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
             model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
             labels = labels.to(device)
             with torch.no_grad():
@@ -533,6 +541,8 @@ if __name__ == '__main__':
                         help='Number of iterations to run trigger search algorithm')
     parser.add_argument('--accumulation-steps', type=int, default=10)
     parser.add_argument('--model-name', type=str, default='bert-base-cased',
+                        help='Model name passed to HuggingFace AutoX classes.')
+    parser.add_argument('--eval-model-name', type=str, default='bert-base-cased',
                         help='Model name passed to HuggingFace AutoX classes.')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--limit', type=int, default=None)

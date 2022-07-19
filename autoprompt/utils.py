@@ -108,6 +108,28 @@ def encode_label(tokenizer, label, tokenize=False):
     return encoded
 
 
+def tokenize_input(inputs, labels, tokenizer):
+    model_inputs = [" {} [T] [T] [T] [T] [T] [P].".format(s) for s in inputs]
+    model_inputs = tokenizer(model_inputs, padding=True, return_tensors="pt")
+
+    input_ids = model_inputs['input_ids']
+    trigger_mask = input_ids.eq(tokenizer.trigger_token_id)
+    predict_mask = input_ids.eq(tokenizer.predict_token_id)
+    last_trigger_mask = torch.zeros_like(predict_mask)
+    last_trigger_id = (np.argwhere(predict_mask)[1]-1).item()
+    last_trigger_mask[0][last_trigger_id] = True
+
+    input_ids[predict_mask] = tokenizer.mask_token_id
+
+    model_inputs['trigger_mask'] = trigger_mask
+    model_inputs['predict_mask'] = predict_mask
+    model_inputs['last_trigger_mask'] = last_trigger_mask
+
+    # Encode the label(s)
+    labels_list = [encode_label(tokenizer=tokenizer, label=label, tokenize=True) for label in labels]
+    label_id = torch.unsqueeze(torch.tensor(labels_list),1)
+    return model_inputs, label_id
+
 class TriggerTemplatizer:
     """
     An object to facilitate creating transformers-friendly triggers inputs from a template.
@@ -236,7 +258,7 @@ LOADERS = {
 }
 
 
-def load_trigger_dataset(fname, templatizer, use_ctx, limit=None):
+def load_trigger_dataset(fname, use_ctx, limit=None):
     loader = LOADERS[fname.suffix]
     instances = []
 
@@ -261,14 +283,16 @@ def load_trigger_dataset(fname, templatizer, use_ctx, limit=None):
                 # We explicitly use [MASK] because all TREx fact's context sentences use it
                 context = masked_sent.replace('[MASK]', obj_surface)
                 x['context'] = context
-                model_inputs, label_id = templatizer(x)
+                #model_inputs, label_id = templatizer(x)
+                instance = (x["sub_label"], x["obj_label"])
             else:
-                model_inputs, label_id = templatizer(x)
+                #model_inputs, label_id = templatizer(x)
+                instance = (x["sub_label"], x["obj_label"])
         except ValueError as e:
             logger.warning('Encountered error "%s" when processing "%s".  Skipping.', e, x)
             continue
         else:
-            instances.append((model_inputs, label_id))
+            instances.append(instance)
     if limit:
         return random.sample(instances, limit)
     else:
