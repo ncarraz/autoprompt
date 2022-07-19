@@ -224,7 +224,7 @@ def run_model(args):
     embedding_gradient = GradientStorage(embeddings)
     predictor = PredictWrapper(model)
 
-    config, eval_model, tokenizer = load_pretrained(args.eval_model_name)
+    eval_config, eval_model, eval_tokenizer = load_pretrained(args.eval_model_name)
     eval_model.to(device)
     eval_predictor = PredictWrapper(eval_model)
     """ 
@@ -257,8 +257,8 @@ def run_model(args):
     )
     eval_templatizer = utils.TriggerTemplatizer(
         args.eval_template,
-        config,
-        tokenizer,
+        eval_config,
+        eval_tokenizer,
         label_map=label_map,
         label_field=args.label_field,
         tokenize_labels=args.tokenize_labels,
