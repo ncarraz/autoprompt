@@ -163,7 +163,7 @@ def hotflip_attack(averaged_grad,
             averaged_grad
         )
         if filter is not None:
-            print(gradient_dot_embedding_matrix.shape, filter.shape)
+            #print(gradient_dot_embedding_matrix.shape, filter.shape)
             gradient_dot_embedding_matrix -= filter
         if not increase_loss:
             gradient_dot_embedding_matrix *= -1
@@ -289,7 +289,8 @@ def run_model(args):
         evaluation_fn = lambda x, y: -get_loss(x, y)
 
     logger.info('Loading datasets')
-    collator = utils.Collator(pad_token_id=tokenizer.pad_token_id)
+    collator = utils.Collator(pad_token_id=train_tokenizer.pad_token_id)
+    eval_collator = utils.Collator(pad_token_id=tokenizer.pad_token_id)
 
     if args.perturbed:
         train_dataset = utils.load_augmented_trigger_dataset(args.train, templatizer, limit=args.limit)
@@ -303,7 +304,7 @@ def run_model(args):
         dev_dataset = utils.load_augmented_trigger_dataset(args.dev, eval_templatizer)
     else:
         dev_dataset = utils.load_trigger_dataset(args.dev, eval_templatizer, use_ctx=args.use_ctx)
-    dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False, collate_fn=collator)
+    dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False, collate_fn=eval_collator)
 
     # To "filter" unwanted trigger tokens, we subtract a huge number from their logits.
     tokenizer_vocab_size = train_tokenizer.vocab_size
@@ -322,7 +323,7 @@ def run_model(args):
                 filter[label_ids] = -1e32
         logger.info('Filtering special tokens and capitalized words.')
         for word, idx in train_tokenizer.get_vocab().items():
-            if len(word) == 1 or idx >= tokenizer.vocab_size:
+            if len(word) == 1 or idx >= train_tokenizer.vocab_size:
                 continue
             # Filter special tokens.
             if idx in train_tokenizer.all_special_ids:
