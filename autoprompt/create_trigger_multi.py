@@ -228,6 +228,7 @@ def run_model(args):
     eval_config, eval_model, eval_tokenizer = load_pretrained(args.eval_model_name)
     eval_model.to(device)
     eval_predictor = PredictWrapper(eval_model)
+    tokenizer = eval_tokenizer
     """ 
     eval_predictors = []
     for eval_model_name in ["roberta-base","roberta-large","distilroberta-base","facebook/bart-base","facebook/bart-large"]:
