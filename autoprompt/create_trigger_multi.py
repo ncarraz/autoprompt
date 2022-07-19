@@ -293,7 +293,9 @@ def run_model(args):
         train_dataset = utils.load_augmented_trigger_dataset(args.train, templatizer, limit=args.limit)
     else:
         train_dataset = utils.load_trigger_dataset(args.train, templatizer, use_ctx=args.use_ctx, limit=args.limit)
+        train_dataset_model_2 = utils.load_trigger_dataset(args.train, eval_templatizer, use_ctx=args.use_ctx, limit=args.limit)
     train_loader = DataLoader(train_dataset, batch_size=args.bsz, shuffle=True, collate_fn=collator)
+    train_loader_model_2 = DataLoader(train_dataset_model_2, batch_size=args.bsz, shuffle=True, collate_fn=collator)
 
     if args.perturbed:
         dev_dataset = utils.load_augmented_trigger_dataset(args.dev, eval_templatizer)
@@ -336,7 +338,7 @@ def run_model(args):
         model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
         labels = labels.to(device)
         with torch.no_grad():
-            predict_logits = predictor(model_inputs, trigger_ids)
+            predict_logits = eval_predictor(model_inputs, trigger_ids)
         numerator += evaluation_fn(predict_logits, labels).sum().item()
         denominator += labels.size(0)
     dev_metric = numerator / (denominator + 1e-13)
@@ -389,7 +391,8 @@ def run_model(args):
 
         logger.info('Evaluating Candidates')
         pbar = tqdm(range(args.accumulation_steps))
-        train_iter = iter(train_loader)
+        #train_iter = iter(train_loader)
+        train_iter_model_2 = iter(train_loader_model_2)
 
         token_to_flip = random.randrange(templatizer.num_trigger_tokens)
         candidates = hotflip_attack(averaged_grad[token_to_flip],
@@ -404,7 +407,7 @@ def run_model(args):
         for step in pbar:
 
             try:
-                model_inputs, labels = next(train_iter)
+                model_inputs, labels = next(train_iter_model_2)
             except:
                 logger.warning(
                     'Insufficient data for number of accumulation steps. '
