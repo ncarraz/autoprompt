@@ -228,6 +228,7 @@ def run_model(args):
     eval_config, eval_model, eval_tokenizer = load_pretrained(args.eval_model_name)
     eval_model.to(device)
     eval_predictor = PredictWrapper(eval_model)
+    train_tokenizer = tokenizer
     tokenizer = eval_tokenizer
     """ 
     eval_predictors = []
@@ -305,7 +306,7 @@ def run_model(args):
     dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False, collate_fn=collator)
 
     # To "filter" unwanted trigger tokens, we subtract a huge number from their logits.
-    tokenizer_vocab_size = tokenizer.vocab_size
+    tokenizer_vocab_size = train_tokenizer.vocab_size
     if config.model_type == "t5": # implemetation details for t5
         tokenizer_vocab_size = 32128
     filter = torch.zeros(tokenizer_vocab_size, dtype=torch.float32, device=device)
@@ -314,21 +315,21 @@ def run_model(args):
         logger.info('Filtering label tokens.')
         if label_map:
             for label_tokens in label_map.values():
-                label_ids = utils.encode_label(tokenizer, label_tokens).unsqueeze(0)
+                label_ids = utils.encode_label(train_tokenizer, label_tokens).unsqueeze(0)
                 filter[label_ids] = -1e32
         else:
             for _, label_ids in train_dataset:
                 filter[label_ids] = -1e32
         logger.info('Filtering special tokens and capitalized words.')
-        for word, idx in tokenizer.get_vocab().items():
+        for word, idx in train_tokenizer.get_vocab().items():
             if len(word) == 1 or idx >= tokenizer.vocab_size:
                 continue
             # Filter special tokens.
-            if idx in tokenizer.all_special_ids:
+            if idx in train_tokenizer.all_special_ids:
                 logger.debug('Filtered: %s', word)
                 filter[idx] = -1e32
             # Filter capitalized words (lazy way to remove proper nouns).
-            if isupper(idx, tokenizer):
+            if isupper(idx, train_tokenizer):
                 logger.debug('Filtered: %s', word)
                 filter[idx] = -1e32
 
