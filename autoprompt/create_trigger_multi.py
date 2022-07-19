@@ -438,7 +438,7 @@ def run_model(args):
                 temp_trigger = trigger_ids.clone()
                 temp_trigger[:, token_to_flip] = candidate
                 with torch.no_grad():
-                    predict_logits = eval_predictor(model_inputs, temp_trigger)
+                    predict_logits = predictor(model_inputs, temp_trigger)
                     eval_metric = evaluation_fn(predict_logits, labels)
 
                 candidate_scores[i] += eval_metric.sum()
