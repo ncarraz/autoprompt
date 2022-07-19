@@ -224,6 +224,10 @@ def run_model(args):
     embedding_gradient = GradientStorage(embeddings)
     predictor = PredictWrapper(model)
 
+    config, eval_model, tokenizer = load_pretrained(args.eval_model_name)
+    eval_model.to(device)
+    eval_predictor = PredictWrapper(eval_model)
+    """ 
     eval_predictors = []
     for eval_model_name in ["roberta-base","roberta-large","distilroberta-base","facebook/bart-base","facebook/bart-large"]:
         config, eval_model, tokenizer = load_pretrained(eval_model_name)
@@ -231,6 +235,8 @@ def run_model(args):
         eval_predictor = PredictWrapper(eval_model)
         eval_predictors.append(eval_predictor)
     eval_predictors = cycle(eval_predictors)
+    """
+
 
     if args.label_map is not None:
         label_map = json.loads(args.label_map)
@@ -241,6 +247,16 @@ def run_model(args):
 
     templatizer = utils.TriggerTemplatizer(
         args.template,
+        config,
+        tokenizer,
+        label_map=label_map,
+        label_field=args.label_field,
+        tokenize_labels=args.tokenize_labels,
+        add_special_tokens=False,
+        use_ctx=args.use_ctx
+    )
+    eval_templatizer = utils.TriggerTemplatizer(
+        args.eval_template,
         config,
         tokenizer,
         label_map=label_map,
@@ -279,9 +295,9 @@ def run_model(args):
     train_loader = DataLoader(train_dataset, batch_size=args.bsz, shuffle=True, collate_fn=collator)
 
     if args.perturbed:
-        dev_dataset = utils.load_augmented_trigger_dataset(args.dev, templatizer)
+        dev_dataset = utils.load_augmented_trigger_dataset(args.dev, eval_templatizer)
     else:
-        dev_dataset = utils.load_trigger_dataset(args.dev, templatizer, use_ctx=args.use_ctx)
+        dev_dataset = utils.load_trigger_dataset(args.dev, eval_templatizer, use_ctx=args.use_ctx)
     dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False, collate_fn=collator)
 
     # To "filter" unwanted trigger tokens, we subtract a huge number from their logits.
@@ -340,7 +356,7 @@ def run_model(args):
         train_iter = iter(train_loader)
         averaged_grad = None
 
-        eval_predictor = next(eval_predictors)
+        #eval_predictor = next(eval_predictors)
         # Accumulate
         for step in pbar:
 
@@ -519,6 +535,7 @@ if __name__ == '__main__':
     parser.add_argument('--train', type=Path, required=True, help='Train data path')
     parser.add_argument('--dev', type=Path, required=True, help='Dev data path')
     parser.add_argument('--template', type=str, help='Template string')
+    parser.add_argument('--eval_template', type=str, help='Template string')
     parser.add_argument('--label-map', type=str, default=None, help='JSON object defining label map')
 
     # LAMA-specific
