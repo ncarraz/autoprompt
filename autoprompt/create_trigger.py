@@ -419,6 +419,9 @@ def run_model(args):
                 converted_trigger_ids = converted_trigger_ids.to(device)
                 num_converted_trigger_tokens = converted_trigger_ids.shape[1]
                 model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
+                
+                model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
+                labels = labels.to(device)
                 with torch.no_grad():
                     predict_logits = eval_predictor(model_inputs, converted_trigger_ids)
                     eval_metric = evaluation_fn(predict_logits, labels)
