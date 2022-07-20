@@ -312,7 +312,7 @@ def run_model(args):
     numerator = 0
     denominator = 0
     for model_inputs, labels in tqdm(dev_loader):
-        model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
+        model_inputs, labels = utils.tokenize_input(model_inputs, labels, eval_tokenizer)
         model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
         labels = labels.to(device)
         with torch.no_grad():
@@ -384,8 +384,10 @@ def run_model(args):
         for step in pbar:
 
             try:
-                model_inputs, labels = next(train_iter)
-                model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
+                inputs, text_labels = next(train_iter)
+                converted_trigger_ids = eval_tokenizer.encode(tokenizer.decode(trigger_ids.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token), return_tensors="pt", add_special_tokens=False)
+                num_converted_trigger_tokens = converted_trigger_ids.shape[1]
+                model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
             except:
                 logger.warning(
                     'Insufficient data for number of accumulation steps. '
@@ -395,7 +397,7 @@ def run_model(args):
             model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
             labels = labels.to(device)
             with torch.no_grad():
-                predict_logits = predictor(model_inputs, trigger_ids)
+                predict_logits = eval_predictor(model_inputs, converted_trigger_ids)
                 eval_metric = evaluation_fn(predict_logits, labels)
 
             # Update current score
@@ -412,8 +414,11 @@ def run_model(args):
 
                 temp_trigger = trigger_ids.clone()
                 temp_trigger[:, token_to_flip] = candidate
+                converted_trigger_ids = eval_tokenizer.encode(tokenizer.decode(temp_trigger.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token), return_tensors="pt", add_special_tokens=False)
+                num_converted_trigger_tokens = converted_trigger_ids.shape[1]
+                model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
                 with torch.no_grad():
-                    predict_logits = predictor(model_inputs, temp_trigger)
+                    predict_logits = eval_predictor(model_inputs, converted_trigger_ids)
                     eval_metric = evaluation_fn(predict_logits, labels)
 
                 candidate_scores[i] += eval_metric.sum()
@@ -438,12 +443,14 @@ def run_model(args):
         logger.info('Evaluating')
         numerator = 0
         denominator = 0
-        for model_inputs, labels in tqdm(dev_loader):
-            model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
+        for inputs, text_labels in tqdm(dev_loader):
+            converted_trigger_ids = eval_tokenizer.encode(tokenizer.decode(trigger_ids.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token), return_tensors="pt", add_special_tokens=False)
+            num_converted_trigger_tokens = converted_trigger_ids.shape[1]
+            model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
             model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
             labels = labels.to(device)
             with torch.no_grad():
-                predict_logits = predictor(model_inputs, trigger_ids)
+                predict_logits = eval_predictor(model_inputs, converted_trigger_ids)
             numerator += evaluation_fn(predict_logits, labels).sum().item()
             denominator += labels.size(0)
         dev_metric = numerator / (denominator + 1e-13)

@@ -108,8 +108,9 @@ def encode_label(tokenizer, label, tokenize=False):
     return encoded
 
 
-def tokenize_input(inputs, labels, tokenizer):
-    model_inputs = [" {} [T] [T] [T] [T] [T] [P].".format(s) for s in inputs]
+def tokenize_input(inputs, labels, tokenizer, num_tokens=5):
+    template = " ".join(["[T]"] * num_tokens)
+    model_inputs = [" {} {} [P].".format(s, template) for s in inputs]
     model_inputs = tokenizer(model_inputs, padding=True, return_tensors="pt")
 
     input_ids = model_inputs['input_ids']
