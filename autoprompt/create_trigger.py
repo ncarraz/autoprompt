@@ -271,13 +271,13 @@ def run_model(args):
         train_dataset = utils.load_augmented_trigger_dataset(args.train, templatizer, limit=args.limit)
     else:
         train_dataset = utils.load_trigger_dataset(args.train, use_ctx=args.use_ctx, limit=args.limit)
-    train_loader = DataLoader(train_dataset, batch_size=args.bsz, shuffle=True, collate_fn=collator)
+    train_loader = DataLoader(train_dataset, batch_size=args.bsz, shuffle=True)
 
     if args.perturbed:
         dev_dataset = utils.load_augmented_trigger_dataset(args.dev, templatizer)
     else:
         dev_dataset = utils.load_trigger_dataset(args.dev, use_ctx=args.use_ctx)
-    dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False, collate_fn=collator)
+    dev_loader = DataLoader(dev_dataset, batch_size=args.eval_size, shuffle=False)
 
     # To "filter" unwanted trigger tokens, we subtract a huge number from their logits.
     tokenizer_vocab_size = tokenizer.vocab_size
@@ -292,7 +292,8 @@ def run_model(args):
                 label_ids = utils.encode_label(tokenizer, label_tokens).unsqueeze(0)
                 filter[label_ids] = -1e32
         else:
-            for _, label_ids in train_dataset:
+            for model_inputs, label_ids in train_loader:
+                model_inputs, label_ids = utils.tokenize_input(model_inputs, label_ids, tokenizer)
                 filter[label_ids] = -1e32
         logger.info('Filtering special tokens and capitalized words.')
         for word, idx in tokenizer.get_vocab().items():

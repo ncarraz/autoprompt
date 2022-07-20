@@ -116,8 +116,8 @@ def tokenize_input(inputs, labels, tokenizer):
     trigger_mask = input_ids.eq(tokenizer.trigger_token_id)
     predict_mask = input_ids.eq(tokenizer.predict_token_id)
     last_trigger_mask = torch.zeros_like(predict_mask)
-    last_trigger_id = (np.argwhere(predict_mask)[1]-1).item()
-    last_trigger_mask[0][last_trigger_id] = True
+    last_trigger_id = (np.argwhere(predict_mask)[1]-1)
+    last_trigger_mask[range(last_trigger_mask.shape[0]), last_trigger_id] = True
 
     input_ids[predict_mask] = tokenizer.mask_token_id
 
