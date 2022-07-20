@@ -386,6 +386,7 @@ def run_model(args):
             try:
                 inputs, text_labels = next(train_iter)
                 converted_trigger_ids = eval_tokenizer.encode(tokenizer.decode(trigger_ids.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token), return_tensors="pt", add_special_tokens=False)
+                converted_trigger_ids = converted_trigger_ids.to(device)
                 num_converted_trigger_tokens = converted_trigger_ids.shape[1]
                 model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
             except:
@@ -415,6 +416,7 @@ def run_model(args):
                 temp_trigger = trigger_ids.clone()
                 temp_trigger[:, token_to_flip] = candidate
                 converted_trigger_ids = eval_tokenizer.encode(tokenizer.decode(temp_trigger.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token), return_tensors="pt", add_special_tokens=False)
+                converted_trigger_ids = converted_trigger_ids.to(device)
                 num_converted_trigger_tokens = converted_trigger_ids.shape[1]
                 model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
                 with torch.no_grad():
@@ -445,6 +447,7 @@ def run_model(args):
         denominator = 0
         for inputs, text_labels in tqdm(dev_loader):
             converted_trigger_ids = eval_tokenizer.encode(tokenizer.decode(trigger_ids.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token), return_tensors="pt", add_special_tokens=False)
+            converted_trigger_ids = converted_trigger_ids.to(device)
             num_converted_trigger_tokens = converted_trigger_ids.shape[1]
             model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
             model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
