@@ -528,8 +528,9 @@ def run_model(args):
         out_json = json.dumps(out)
         print(out_json)
         name_suffix = args.model_name.split("/")[1] if "/" in args.model_name else args.model_name
+        eval_name_suffix = args.eval_model_name.split("/")[1] if "/" in args.eval_model_name else args.eval_model_name
         os.makedirs("results", exist_ok=True)
-        result_file_name = "results/{}_autoprompt_seed_{}.jsonl".format(name_suffix, args.seed)
+        result_file_name = "results/{}_{}_autoprompt_seed_{}.jsonl".format(name_suffix, eval_name_suffix, args.seed)
         result_file = open(result_file_name,"a")
         result_file.write("{}\n".format(out_json))
         result_file.close()
