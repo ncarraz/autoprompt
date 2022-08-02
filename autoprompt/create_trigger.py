@@ -385,7 +385,10 @@ def run_model(args):
 
             try:
                 inputs, text_labels = next(train_iter)
-                converted_trigger_ids = eval_tokenizer.encode(tokenizer.decode(trigger_ids.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token), return_tensors="pt", add_special_tokens=False)
+                tokenizer_text = tokenizer.decode(trigger_ids.squeeze()).replace(tokenizer.mask_token, eval_tokenizer.mask_token)
+                # filter special tokens
+                tokenizer_text = tokenizer_text.replace(tokenizer.trigger_token, "").replace(tokenizer.predict_token, "").replace(tokenizer.lama_y, "")
+                converted_trigger_ids = eval_tokenizer.encode(tokenizer_text, return_tensors="pt", add_special_tokens=False)
                 converted_trigger_ids = converted_trigger_ids.to(device)
                 num_converted_trigger_tokens = converted_trigger_ids.shape[1]
                 model_inputs, labels = utils.tokenize_input(inputs, text_labels, eval_tokenizer, num_tokens=num_converted_trigger_tokens)
