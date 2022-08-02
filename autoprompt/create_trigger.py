@@ -312,7 +312,7 @@ def run_model(args):
     numerator = 0
     denominator = 0
     for model_inputs, labels in tqdm(dev_loader):
-        model_inputs, labels = utils.tokenize_input(model_inputs, labels, eval_tokenizer)
+        model_inputs, labels = utils.tokenize_input(model_inputs, labels, tokenizer)
         model_inputs = {k: v.to(device) for k, v in model_inputs.items()}
         labels = labels.to(device)
         with torch.no_grad():
