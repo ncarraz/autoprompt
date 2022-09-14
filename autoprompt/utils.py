@@ -165,11 +165,7 @@ class TriggerTemplatizer:
         # Have the tokenizer encode the text and process the output to:
         # - Create a trigger and predict mask
         # - Replace the predict token with a mask token
-        model_inputs = self._tokenizer.encode_plus(
-            text,
-            add_special_tokens=self._add_special_tokens,
-            return_tensors='pt'
-        )
+        model_inputs = self._tokenizer.encode_plus(text, return_tensors='pt')
         input_ids = model_inputs['input_ids']
         trigger_mask = input_ids.eq(self._tokenizer.trigger_token_id)
         predict_mask = input_ids.eq(self._tokenizer.predict_token_id)

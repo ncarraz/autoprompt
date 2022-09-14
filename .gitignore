@@ -67,5 +67,8 @@ data
 OUTPUT*
 data/
 results/
+RESULTS/
+scripts/
+results_multiberts/
 old_results/
 nohup.out
